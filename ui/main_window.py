@@ -1,6 +1,7 @@
 from pathlib import Path
 import subprocess
 import sys
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from PySide6.QtCore import QEvent, Qt, QProcess, QTimer
@@ -40,11 +41,6 @@ from ui.resources import (
     ANALYZE_ICON,
     APP_ICON,
     ASSETS,
-    CANCEL_ICON,
-    DELETE_ICON,
-    DOWNLOAD_ICON,
-    FOLDER_ICON,
-    PLAY_ICON,
     REFRESH_ICON,
     THUMBNAIL_PLACEHOLDER,
 )
@@ -73,6 +69,60 @@ def extract_url_from_mime_data(mime_data) -> str:
 
 
 class MainWindow(QMainWindow):
+    # Panel widgets are constructed in the dedicated UI modules. Declaring
+    # them here makes the MainWindow interface explicit to static analyzers.
+    left_panel: Any
+    left_layout: Any
+    left_scroll_area: Any
+    thumbnail_label: Any
+    download_thumbnail_button: Any
+    video_information_group: Any
+    title_label: Any
+    channel_label: Any
+    duration_label: Any
+    resolution_label: Any
+    fps_label: Any
+    filesize_label: Any
+    upload_label: Any
+    views_label: Any
+    type_label: Any
+    live_label: Any
+    playlist_summary_group: Any
+    playlist_name_value: Any
+    playlist_uploader_value: Any
+    playlist_videos_value: Any
+    playlist_duration_value: Any
+    playlist_size_value: Any
+
+    center_panel: Any
+    center_layout: Any
+    quality_label: Any
+    quality_combo: Any
+    format_label: Any
+    format_combo: Any
+    audio_combo: Any
+    folder_input: Any
+    browse_button: Any
+    download_button: Any
+    resume_button: Any
+    cancel_button: Any
+    resume_hint_label: Any
+
+    right_panel: Any
+    right_layout: Any
+    right_scroll_area: Any
+    codec_value: Any
+    container_value: Any
+    audio_value: Any
+    bitrate_value: Any
+    filesize2_value: Any
+    history_list: Any
+
+    progress: Any
+    speed_label: Any
+    eta_label: Any
+    downloaded_label: Any
+    status_label: Any
 
     def _apply_theme_palette(self, theme):
         palette = self.palette()
@@ -1366,7 +1416,6 @@ class MainWindow(QMainWindow):
     def cancel_download(self):
 
         worker = getattr(self, "download_worker", None)
-        thread = getattr(self, "download_thread", None)
 
         if worker is not None:
             self.cancel_button.setEnabled(False)
