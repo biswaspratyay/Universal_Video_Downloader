@@ -5,7 +5,7 @@
 <h1 align="center">Universal Video Downloader</h1>
 
 <p align="center">
-  <a href="https://github.com/biswaspratyay/Universal_Video_Downloader/releases/latest">
+  <a href="https://github.com/biswaspratyay/Universal_Video_Downloader_-new-/releases/latest">
     <img src="https://img.shields.io/badge/⬇_Latest_Release-Download-success?style=for-the-badge&logo=github">
   </a>
 </p>
