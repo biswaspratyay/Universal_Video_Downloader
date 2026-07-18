@@ -1,116 +1,104 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Universal Video Downloader Logo" width="180">
+  <img src="screenshots/logo.png" alt="Universal Video Downloader Logo" width="180">
 </p>
 
 <h1 align="center">Universal Video Downloader</h1>
 
 <p align="center">
-  <b>Modern • Fast • Elegant • Open Source</b>
+  <a href="https://github.com/biswaspratyay/Universal_Video_Downloader/releases/latest">
+    <img src="https://img.shields.io/badge/⬇_Latest_Release-Download-success?style=for-the-badge&logo=github">
+  </a>
 </p>
 
 <p align="center">
-  Download videos and audio from multiple platforms with a clean, modern desktop experience.
+  <b>A clean, ad-free desktop client for downloading videos and audio.</b>
 </p>
 
 ---
 
-Universal Video Downloader is an open-source desktop application built with **Python**, **PySide6**, **yt-dlp**, and **FFmpeg**, designed to make downloading videos simple, powerful, fast and enjoyable with no-ads. With a clean interface, real-time progress tracking, multiple quality options, resume support, and a modern theme system, it offers a smooth downloading experience for both casual and power users.
-
----
-
-## ✨ Features
-
-* 🎥 Download videos in multiple resolutions and formats
-* 🎵 Extract and download audio in your preferred format
-* 📺 Live thumbnail preview and detailed video information
-* ⚡ Real-time download progress with speed and ETA
-* 🔄 Resume interrupted downloads
-* ⏸️ Cancel downloads with automatic cleanup of partial files
-* 🎯 Format analyzer with codec, bitrate, and estimated size
-* 📂 Custom download location
-* 🖱️ Drag & Drop URL support
-* 🎨 Beautiful modern UI with multiple themes
-* 💾 Remembers your settings between sessions
-* 📦 Standalone executable with bundled FFmpeg
-* 🖥️ Cross-platform architecture (Windows support available, Linux/macOS builds planned)
-
----
-
-## 🛠️ Built With
-
-* **Python**
-* **PySide6 (Qt for Python)**
-* **yt-dlp**
-* **FFmpeg**
-* **PyInstaller**
-
----
-
-## 📦 Installation
-
-Getting started is quick and easy:
-
-1. 📥 Download the latest release:
-   - **UniversalVideoDownloader_v1.0.zip**
-2. 📂 Extract (unzip) the downloaded file.
-3. 📁 Open the **UniversalVideoDownloader** folder.
-4. ▶️ Double-click **UniversalVideoDownloader.exe**.
-5. 🎉 Enjoy!
-
-> **Note:** Windows SmartScreen may display a warning because the application isn't code-signed yet. Click **More info** → **Run anyway** to launch it.   
-
----
-
-## 🚀 Getting Started
-
-1. Paste or drag a supported video URL into the URL field.
-2. Click **Analyze** to retrieve available download formats.
-3. Select your preferred quality, format, and audio options.
-4. Choose the destination folder.
-5. Click **Download** and let Universal Video Downloader handle the rest.
+I built Universal Video Downloader because I wanted a straightforward GUI for `yt-dlp` and `FFmpeg` that didn't look like a relic from 2005. Written in Python and PySide6, it handles the heavy lifting of pulling media from most platforms while giving you format choices, resume support, and reliable progress tracking.
 
 
----
+## Features
+
+* **Multi-Platform Support:** Downloads video and audio from anywhere `yt-dlp` supports.
+* **Format Analyzer:** See the exact codec, bitrate, and estimated file size before you download.
+* **Live Previews:** Fetches thumbnails and detailed video metadata instantly.
+* **Download Management:** Real-time speed and ETA tracking, with the ability to pause, resume, or cancel (automatically cleans up partial files).
+* **Standalone:** Comes bundled with FFmpeg, so it works right out of the box.
+* **Cross-Platform Architecture:** Windows builds are currently available, with Linux and macOS support planned.
+* **Playlist Download Manager:** Copy and analyze the link of any YouTube playlist to see the playlist details and either download the entire playlist or download your selected ones. The choice is completely yours.
+
+
+## Tech Stack
+
+* Python
+* PySide6 (Qt for Python)
+* yt-dlp
+* FFmpeg
+* PyInstaller
+
+
+## Installation
+
+1. Grab the latest `UniversalVideoDownloader-v1.1-Windows-x64.zip` from the [Releases page](https://github.com/biswaspratyay/Universal_Video_Downloader/releases/latest).
+2. Extract the folder anywhere on your PC.
+3. Run `UniversalVideoDownloader.exe`.
+
+> **Note:** Because the application isn't signed with a paid developer certificate yet, Windows SmartScreen will likely flag it. Click **More info** → **Run anyway** to bypass this.
+
+
+## Download
+
+### Just want to use the app?
+Download **`UniversalVideoDownloader-v1.1-Windows-x64.zip`**
+
+### Want to build or modify the project?
+Download **Source code (zip)** or **Source code (tar.gz)**
+
+> **Note:** The Source code archives do **not** contain a ready-to-run application.
+
+
+## Usage
+
+Using the app is pretty simple: just paste a supported URL, click **Analyze** to pull the available formats, pick the quality you want, and hit **Download**. You can also drag and drop URLs directly into the window.
+
 
 ## 📸 Screenshots
 
-### 🏠 Home Screen
+<p align="center">
+<img src="screenshots/screenshots/hero.png" width="90%">
+</p>
 
-![Universal Video Downloader](assets/screenshots/hero.png)
-
-### 📋 Paste The Link
-
-![Main Window](assets/screenshots/main-window.png)
-
-### 🔍 Analyze
-
-![Downloading](assets/screenshots/analyze.png)
-
-### ⬇️ Download 
-
-![Themes](assets/screenshots/download.png)
+<p align="center">
+<i>Clean interface designed to keep everything in one place.</i>
+</p>
 
 ---
 
-## ❤️ Why This Project?
+<p align="center">
+<img src="screenshots/screenshots/main-window.png" width="46%">
+<img src="screenshots/screenshots/analyze.png" width="46%">
+</p>
 
-This project started as a personal challenge to build a clean, modern, and user-friendly download manager while learning more about desktop application development with Qt and Python. Every part of the interface has been carefully refined to deliver a polished experience.
+<p align="center">
+<b>Paste URL</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<b>Analyze Video</b>
+</p>
 
 ---
 
-## 📄 License
+<p align="center">
+<img src="screenshots/screenshots/download.png" width="90%">
+</p>
 
-This project is licensed under the **MIT License**.
-
----
-
-## 💬 Feedback
-
-Ideas, bug reports, feature requests, and contributions are always welcome!
-
-If you find this project useful, consider giving it a ⭐ to support its development.
+<p align="center">
+<i>Track download progress with live speed, ETA, and status updates.</i>
+</p>
 
 
+## License & Contributing
 
+This project is open-source under the **MIT License**.
 
-
+Bug reports, feature requests, and pull requests are welcome. If you find this tool useful, a ⭐ on the repo is always appreciated!
