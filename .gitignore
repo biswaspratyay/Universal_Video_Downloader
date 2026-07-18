@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# PyInstaller
+build/
+dist/
+
+# Runtime folders
+downloads/
+logs/
+temp/
+
+# Testing
+.pytest_cache/
+.coverage
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# GitHub
+.github/.DS_Store
