@@ -19,7 +19,7 @@ def main():
 
     app.setApplicationName("Universal Video Downloader")
     app.setApplicationDisplayName("Universal Video Downloader")
-    app.setApplicationVersion("1.1")
+    app.setApplicationVersion("1.2")
 
     app.setWindowIcon(QIcon(str(APP_ICON)))
 

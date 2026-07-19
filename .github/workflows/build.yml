@@ -1,0 +1,265 @@
+name: Build Universal Video Downloader
+
+on:
+  push:
+    tags:
+      - "v*"
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-latest
+            platform: Windows-x64
+            archive: zip
+
+          - name: Linux x64
+            os: ubuntu-latest
+            platform: Linux-x64
+            archive: tar.gz
+
+    env:
+      APP_NAME: UniversalVideoDownloader
+      VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'dev' }}
+
+    steps:
+
+      ####################################################################
+      # Checkout
+      ####################################################################
+
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      ####################################################################
+      # Python
+      ####################################################################
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14.6"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      ####################################################################
+      # Download FFmpeg (Windows)
+      ####################################################################
+
+      - name: Download FFmpeg (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+
+          Invoke-WebRequest `
+            https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip `
+            -OutFile ffmpeg.zip
+
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-extract
+
+          $folder = Get-ChildItem ffmpeg-extract -Directory | Select-Object -First 1
+
+          $bin = Join-Path $folder.FullName "bin"
+
+          New-Item -ItemType Directory -Force ffmpeg/windows | Out-Null
+
+          Copy-Item "$bin/ffmpeg.exe" ffmpeg/windows/
+
+          Copy-Item "$bin/ffprobe.exe" ffmpeg/windows/
+
+      ####################################################################
+      # Download FFmpeg (Linux)
+      ####################################################################
+
+      - name: Download FFmpeg (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+
+          curl --fail --location \
+          https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz \
+          -o ffmpeg.tar.xz
+
+          mkdir -p ffmpeg/linux
+          mkdir ffmpeg-extract
+
+          tar -xf ffmpeg.tar.xz \
+              --strip-components=1 \
+              -C ffmpeg-extract
+
+          install -m755 ffmpeg-extract/bin/ffmpeg ffmpeg/linux/
+
+          install -m755 ffmpeg-extract/bin/ffprobe ffmpeg/linux/
+
+          chmod +x ffmpeg/linux/ffmpeg
+          chmod +x ffmpeg/linux/ffprobe
+
+      ####################################################################
+      # Build
+      ####################################################################
+
+      - name: Build Application (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: python -m PyInstaller --clean --noconfirm UniversalVideoDownloader.spec
+
+      - name: Build Application (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          python -m PyInstaller \
+          --clean \
+          --noconfirm \
+          UniversalVideoDownloader.spec
+
+      ####################################################################
+      # Verify executable (Windows)
+      ####################################################################
+
+      - name: Verify executable (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+
+          if (!(Test-Path "dist/$env:APP_NAME/$env:APP_NAME.exe")) {
+              throw "Executable not found!"
+          }
+
+      ####################################################################
+      # Verify executable (Linux)
+      ####################################################################
+
+      - name: Verify executable (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+
+          test -f "dist/$APP_NAME/$APP_NAME"
+
+      ####################################################################
+      # Package Windows
+      ####################################################################
+
+      - name: Package Application (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+
+          Compress-Archive `
+            -Path "dist/$env:APP_NAME/*" `
+            -DestinationPath "$env:APP_NAME-$env:VERSION-${{ matrix.platform }}.zip"
+
+      ####################################################################
+      # Package Linux
+      ####################################################################
+
+      - name: Package Application (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+
+          tar -czf \
+          "$APP_NAME-$VERSION-${{ matrix.platform }}.tar.gz" \
+          -C dist \
+          "$APP_NAME"
+
+      ####################################################################
+      # Upload Windows Artifact
+      ####################################################################
+
+      - name: Upload Windows Artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: UniversalVideoDownloader-${{ env.VERSION }}-Windows-x64
+          path: UniversalVideoDownloader-${{ env.VERSION }}-Windows-x64.zip
+          if-no-files-found: error
+
+      ####################################################################
+      # Upload Linux Artifact
+      ####################################################################
+
+      - name: Upload Linux Artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: UniversalVideoDownloader-${{ env.VERSION }}-Linux-x64
+          path: UniversalVideoDownloader-${{ env.VERSION }}-Linux-x64.tar.gz
+          if-no-files-found: error
+
+##########################################################################
+# RELEASE
+##########################################################################
+
+  release:
+
+    name: Publish GitHub Release
+
+    if: startsWith(github.ref, 'refs/tags/')
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+
+      ####################################################################
+      # Download Artifacts
+      ####################################################################
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      ####################################################################
+      # Display Files (Debug)
+      ####################################################################
+
+      - name: Show Release Files
+        run: |
+          ls -R release-assets
+
+      ####################################################################
+      # Publish Release
+      ####################################################################
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+
+          files: |
+            release-assets/*.zip
+            release-assets/*.tar.gz
+
+          fail_on_unmatched_files: true
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
