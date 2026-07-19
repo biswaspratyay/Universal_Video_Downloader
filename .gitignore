@@ -32,3 +32,10 @@ Desktop.ini
 
 # GitHub
 .github/.DS_Store
+
+# FFmpeg binaries
+ffmpeg/windows/ffmpeg.exe
+ffmpeg/windows/ffprobe.exe
+
+ffmpeg/linux/ffmpeg
+ffmpeg/linux/ffprobe

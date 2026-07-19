@@ -809,7 +809,7 @@ class MainWindow(QMainWindow):
 
         title_row.addSpacing(12)
 
-        self.version_badge = QLabel("v1.1")
+        self.version_badge = QLabel("v1.2")
 
         self.version_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
 

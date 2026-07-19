@@ -1,25 +1,59 @@
 # -*- mode: python ; coding: utf-8 -*-
-import os
+
 from pathlib import Path
+import platform
 
 block_cipher = None
 
-project_root = Path.cwd()
-ffmpeg_dir = project_root / "ffmpeg"
+# ==========================================================
+# Project Root
+# ==========================================================
+
+project_root = Path(SPECPATH).resolve()
+
 assets_dir = project_root / "assets"
+ffmpeg_root = project_root / "ffmpeg"
 
-added_files = []
-if ffmpeg_dir.exists():
-    added_files.append((str(ffmpeg_dir), "ffmpeg"))
+system = platform.system()
+
+# ==========================================================
+# Platform-specific resources
+# ==========================================================
+
+if system == "Windows":
+    icon_file = assets_dir / "icons" / "app.ico"
+    ffmpeg_dir = ffmpeg_root / "windows"
+
+elif system == "Linux":
+    icon_file = assets_dir / "icons" / "app.png"
+    ffmpeg_dir = ffmpeg_root / "linux"
+
+else:
+    icon_file = assets_dir / "icons" / "app.png"
+    ffmpeg_dir = ffmpeg_root
+
+# ==========================================================
+# Data Files
+# ==========================================================
+
+datas = []
+
 if assets_dir.exists():
-    added_files.append((str(assets_dir), "assets"))
+    datas.append((str(assets_dir), "assets"))
 
+if ffmpeg_dir.exists():
+    # Bundle only the current platform's FFmpeg
+    datas.append((str(ffmpeg_dir), "ffmpeg"))
+
+# ==========================================================
+# Analysis
+# ==========================================================
 
 a = Analysis(
     ["main.py"],
     pathex=[str(project_root)],
     binaries=[],
-    datas=added_files,
+    datas=datas,
     hiddenimports=[],
     hookspath=[],
     hooks=[],
@@ -31,7 +65,19 @@ a = Analysis(
     noarchive=False,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+# ==========================================================
+# PYZ
+# ==========================================================
+
+pyz = PYZ(
+    a.pure,
+    a.zipped_data,
+    cipher=block_cipher,
+)
+
+# ==========================================================
+# Executable
+# ==========================================================
 
 exe = EXE(
     pyz,
@@ -44,8 +90,12 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
-    icon=str(project_root / "assets" / "icons" / "app.ico"),
+    icon=str(icon_file) if icon_file.exists() else None,
 )
+
+# ==========================================================
+# Collect
+# ==========================================================
 
 coll = COLLECT(
     exe,

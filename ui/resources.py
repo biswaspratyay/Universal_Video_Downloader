@@ -1,4 +1,5 @@
 from pathlib import Path
+import platform
 import sys
 
 
@@ -32,10 +33,18 @@ IMAGES = ASSETS / "images"
 
 
 # --------------------------------------------------------
-# Icons
+# Platform Specific App Icon
 # --------------------------------------------------------
 
-APP_ICON = ICONS / "app.ico"
+if platform.system() == "Windows":
+    APP_ICON = ICONS / "app.ico"
+else:
+    APP_ICON = ICONS / "app.png"
+
+
+# --------------------------------------------------------
+# Other Icons
+# --------------------------------------------------------
 
 ANALYZE_ICON = ICONS / "analyze.svg"
 DOWNLOAD_ICON = ICONS / "download.svg"
@@ -64,8 +73,9 @@ BANNER = IMAGES / "banner.png"
 
 THUMBNAIL_PLACEHOLDER = IMAGES / "thumbnail_placeholder.png"
 
+
 # --------------------------------------------------------
-# FFmpeg bundle
+# FFmpeg
 # --------------------------------------------------------
 
 FFMPEG_FOLDER = resource_path("ffmpeg")

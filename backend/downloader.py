@@ -6,7 +6,11 @@ from yt_dlp import YoutubeDL
 
 from PySide6.QtCore import QObject, Signal
 
-from ui.resources import FFMPEG_FOLDER
+from backend.platform_utils import (
+    get_ffmpeg_location,
+    get_ffmpeg_binary,
+    get_ffprobe_binary,
+)
 
 
 class DownloadCancelled(Exception):
@@ -246,16 +250,12 @@ class DownloadWorker(QObject):
             filename = f"%(playlist_title)s/%(playlist_index)03d - {filename}"
         output_template = str(Path(self.output_folder) / filename)
 
-        bundled_ffmpeg_dir = Path(FFMPEG_FOLDER)
-        ffmpeg_location = str(bundled_ffmpeg_dir)
-        if not bundled_ffmpeg_dir.exists() or not (bundled_ffmpeg_dir / "ffmpeg.exe").exists():
-            ffmpeg_location = "C:/ffmpeg/bin"
+        ffmpeg_location = get_ffmpeg_location()
 
         options: dict[str, Any] = {
             "outtmpl": output_template,
             "progress_hooks": [self.progress_hook],
             "noplaylist": not self.download_playlist,
-            "ffmpeg_location": ffmpeg_location,
             "quiet": True,
             "no_warnings": True,
             "overwrites": self.duplicate_policy == "overwrite",
@@ -264,24 +264,29 @@ class DownloadWorker(QObject):
             "nopart": False,
         }
 
+        if ffmpeg_location:
+            options["ffmpeg_location"] = ffmpeg_location
+
         if self.download_playlist and self.playlist_items:
             options["playlist_items"] = ",".join(
                 str(item) for item in self.playlist_items
             )
 
-        if self.embed_metadata:
-            options["addmetadata"] = True
+        options["addmetadata"] = self.embed_metadata
+
         if self.embed_thumbnail:
             options["writethumbnail"] = True
             options["embedthumbnail"] = True
 
         if self.audio_only:
             options["format"] = "bestaudio/best"
-            options["postprocessors"] = [{
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": self._preferred_audio_codec(),
-                "preferredquality": "0",
-            }]
+            options["postprocessors"] = [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": self._preferred_audio_codec(),
+                    "preferredquality": "0",
+                }
+            ]
             options["postprocessor_args"] = ["-vn"]
             options["keepvideo"] = False
             options["merge_output_format"] = self._preferred_audio_codec()
