@@ -41,7 +41,7 @@ I built Universal Video Downloader because I wanted a straightforward GUI for `y
 
 ## Installation
 
-1. Grab the latest `UniversalVideoDownloader-v1.2-Windows-x64.zip` from the [Releases page](https://github.com/biswaspratyay/Universal_Video_Downloader/releases/latest).
+1. Grab the latest `UniversalVideoDownloader-v<version>-Windows-x64.zip` from the [Releases page](https://github.com/biswaspratyay/Universal_Video_Downloader/releases/latest).
 2. Extract the folder anywhere on your PC.
 3. Run `UniversalVideoDownloader.exe`.
 
@@ -51,7 +51,7 @@ I built Universal Video Downloader because I wanted a straightforward GUI for `y
 ## Download
 
 ### Just want to use the app?
-Download **`UniversalVideoDownloader-v1.2-Windows-x64.zip`**
+Download the latest **`UniversalVideoDownloader-v<version>-Windows-x64.zip`** release asset.
 
 ### Want to build or modify the project?
 Download **Source code (zip)** or **Source code (tar.gz)**

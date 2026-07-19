@@ -4,7 +4,7 @@ import sys
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-from PySide6.QtCore import QEvent, Qt, QProcess, QTimer
+from PySide6.QtCore import QEvent, Qt, QProcess, QThread, QTimer
 from PySide6.QtGui import QAction, QColor, QIcon, QPalette, QPixmap
 from PySide6.QtWidgets import QApplication, QFormLayout
 from PySide6.QtWidgets import (
@@ -35,8 +35,12 @@ from backend.image_loader import ImageLoader
 from backend.notifications import play_download_complete_sound
 from backend.settings import SettingsManager
 from backend.thumbnail_downloader import ThumbnailDownloader
+from backend.updater import UpdateInfo
+from backend.updater_worker import UpdateCheckWorker, UpdateDownloadWorker
+from backend.version import CURRENT_VERSION
 from backend.worker import AnalyzeWorker, DownloadThread, WorkerThread
 from ui.dialogs.help_dialog import HelpDialog
+from ui.dialogs.update_dialog import UpdateAvailableDialog, UpdateDownloadDialog
 from ui.resources import (
     ANALYZE_ICON,
     APP_ICON,
@@ -498,11 +502,19 @@ class MainWindow(QMainWindow):
         self.worker = None
         self.current_video = None
         self.history_store = DownloadHistoryStore()
+        self.update_check_thread = None
+        self.update_check_worker = None
+        self.update_check_manual = False
+        self.update_download_thread = None
+        self.update_download_worker = None
+        self.update_download_dialog = None
+        self.update_download_result = None
 
         self.create_menu()
         self.create_statusbar()
         self.build_ui()
         self._update_resume_button_state()
+        QTimer.singleShot(5000, self.check_for_updates)
     
 
     # --------------------------------------------------------
@@ -694,8 +706,158 @@ class MainWindow(QMainWindow):
             self.show_instruction
         )
 
+        update_action = QAction("Check for Updates", self)
+        update_action.triggered.connect(
+            lambda: self.check_for_updates(manual=True)
+        )
+
         help_menu.addAction(instruction_action)
+        help_menu.addSeparator()
+        help_menu.addAction(update_action)
         help_menu.addAction(about_action)
+
+    # --------------------------------------------------------
+    # Application Updates
+    # --------------------------------------------------------
+
+    def check_for_updates(self, manual=False):
+        """Check GitHub Releases from a background thread."""
+
+        if self.update_check_thread is not None and self.update_check_thread.isRunning():
+            if manual:
+                self.statusBar().showMessage("An update check is already in progress.")
+            return
+
+        self.statusBar().showMessage("Checking for updates...")
+        self.update_check_manual = manual
+
+        worker = UpdateCheckWorker()
+        thread = QThread(self)
+        worker.moveToThread(thread)
+
+        thread.started.connect(worker.run)
+        worker.update_available.connect(self._handle_update_available)
+        worker.no_update.connect(self._handle_no_update)
+        worker.error.connect(self._handle_update_error)
+
+        worker.finished.connect(thread.quit)
+        worker.finished.connect(worker.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+        thread.finished.connect(self._clear_update_check_references)
+
+        self.update_check_thread = thread
+        self.update_check_worker = worker
+        thread.start()
+
+    def _clear_update_check_references(self):
+        self.update_check_thread = None
+        self.update_check_worker = None
+
+    def _handle_no_update(self):
+        self.statusBar().showMessage("Universal Video Downloader is up to date.")
+        if self.update_check_manual:
+            QMessageBox.information(
+                self,
+                "No Update Available",
+                "You already have the latest version of Universal Video Downloader.",
+            )
+
+    def _handle_update_error(self, message):
+        self.statusBar().showMessage(message)
+        if self.update_check_manual:
+            QMessageBox.warning(self, "Update Check Unavailable", message)
+
+    def _handle_update_available(self, update: UpdateInfo):
+        skipped_version = self.settings.get("skipped_update_version")
+        if not self.update_check_manual and skipped_version == str(update.latest_version):
+            self.statusBar().showMessage("An update is available but has been skipped.")
+            return
+
+        dialog = UpdateAvailableDialog(update, self)
+        dialog.exec()
+
+        if dialog.choice == "skip":
+            self.settings.set("skipped_update_version", str(update.latest_version))
+            self.settings.save()
+            self.statusBar().showMessage(f"Version v{update.latest_version} will be skipped.")
+        elif dialog.choice == "download":
+            self._download_update(update)
+
+    def _download_update(self, update: UpdateInfo):
+        """Download a verified asset in a worker thread without installing it."""
+
+        worker = UpdateDownloadWorker(update)
+        thread = QThread(self)
+        worker.moveToThread(thread)
+
+        dialog = UpdateDownloadDialog(worker.cancel, self)
+        self.update_download_dialog = dialog
+        self.update_download_result = {"file_path": None, "error": None}
+
+        thread.started.connect(worker.run)
+        worker.progress.connect(dialog.update_progress)
+        worker.completed.connect(self._handle_update_download_complete)
+        worker.error.connect(self._handle_update_download_error)
+        worker.cancelled.connect(self._handle_update_download_cancelled)
+
+        worker.finished.connect(thread.quit)
+        worker.finished.connect(worker.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+        thread.finished.connect(self._clear_update_download_references)
+
+        self.update_download_thread = thread
+        self.update_download_worker = worker
+        thread.start()
+
+        dialog.exec()
+
+        download_result = self.update_download_result or {}
+        file_path = download_result.get("file_path")
+        error = download_result.get("error")
+        self.update_download_dialog = None
+        self.update_download_result = None
+        if file_path is not None:
+            self._show_update_download_complete(file_path)
+        elif error is not None:
+            QMessageBox.warning(self, "Update Download Failed", error)
+        else:
+            self.statusBar().showMessage("Update download cancelled.")
+
+    def _clear_update_download_references(self):
+        self.update_download_thread = None
+        self.update_download_worker = None
+
+    def _handle_update_download_complete(self, file_path):
+        if self.update_download_result is not None:
+            self.update_download_result["file_path"] = file_path
+        if self.update_download_dialog is not None:
+            self.update_download_dialog.accept()
+
+    def _handle_update_download_error(self, message):
+        if self.update_download_result is not None:
+            self.update_download_result["error"] = message
+        if self.update_download_dialog is not None:
+            self.update_download_dialog.close_for_result()
+
+    def _handle_update_download_cancelled(self):
+        if self.update_download_dialog is not None:
+            self.update_download_dialog.close_for_result()
+
+    def _show_update_download_complete(self, file_path: Path):
+        """Report a prepared update without changing the running application."""
+
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Download Complete")
+        dialog.setIcon(QMessageBox.Icon.Information)
+        dialog.setText("Download Complete")
+        dialog.setInformativeText(
+            "Restart to Install? The update has been prepared safely, but this version "
+            "does not replace the running application automatically.\n\n"
+            f"Prepared file: {file_path}"
+        )
+        dialog.addButton("Restart Later", QMessageBox.ButtonRole.AcceptRole)
+        dialog.exec()
+        self.statusBar().showMessage("Update downloaded and ready for a future installer step.")
 
     # --------------------------------------------------------
     # Status Bar
@@ -809,7 +971,7 @@ class MainWindow(QMainWindow):
 
         title_row.addSpacing(12)
 
-        self.version_badge = QLabel("v1.2")
+        self.version_badge = QLabel(f"v{CURRENT_VERSION}")
 
         self.version_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
