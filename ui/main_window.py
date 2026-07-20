@@ -4,8 +4,8 @@ import sys
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-from PySide6.QtCore import QEvent, Qt, QProcess, QThread, QTimer
-from PySide6.QtGui import QAction, QColor, QIcon, QPalette, QPixmap
+from PySide6.QtCore import QEvent, Qt, QProcess, QThread, QTimer, QUrl
+from PySide6.QtGui import QAction, QColor, QDesktopServices, QIcon, QPalette, QPixmap
 from PySide6.QtWidgets import QApplication, QFormLayout
 from PySide6.QtWidgets import (
     QBoxLayout,
@@ -70,6 +70,11 @@ def extract_url_from_mime_data(mime_data) -> str:
         return text
 
     return ""
+
+
+def open_local_path(path: Path) -> bool:
+    """Open a local file or folder with the operating system default app."""
+    return QDesktopServices.openUrl(QUrl.fromLocalFile(str(path.resolve())))
 
 
 class MainWindow(QMainWindow):
@@ -206,10 +211,14 @@ class MainWindow(QMainWindow):
         return folder
 
     def open_download_folder(self):
-        import os
-
         folder = self._get_download_folder()
-        os.startfile(folder)
+        self._open_local_path(folder)
+
+    def _open_local_path(self, path: Path) -> bool:
+        opened = open_local_path(path)
+        if not opened:
+            self.statusBar().showMessage(f"Could not open: {path}", 5000)
+        return opened
 
     def apply_download_settings(self):
         folder_value = self.settings.get("download_folder", "downloads")
@@ -286,8 +295,6 @@ class MainWindow(QMainWindow):
             folder_edit.setText(selected_folder)
 
     def open_latest_download(self):
-        import os
-
         folder = self._get_download_folder()
         supported_extensions = {
             ".mp4",
@@ -313,7 +320,7 @@ class MainWindow(QMainWindow):
             return
 
         latest_file = max(candidates, key=lambda path: path.stat().st_mtime)
-        os.startfile(latest_file)
+        self._open_local_path(latest_file)
 
     def show_download_complete_dialog(self):
         dialog = QMessageBox(self)
