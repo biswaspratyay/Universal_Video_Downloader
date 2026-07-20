@@ -11,7 +11,8 @@
 </p>
 
 <p align="center">
-  <b>A clean, ad-free desktop client for downloading videos and audio.</b>
+  <b>A clean, ad-free desktop app for downloading video and audio.</b><br>
+  <b>Available for both Windows and Linux.</b>
 </p>
 
 ---
